@@ -1,23 +1,40 @@
-# Letterboxd Unfollower Tracker
+# 🎬 Letterboxd Unfollower Tracker
 
-A CLI tool that takes daily snapshots of your Letterboxd followers and alerts you when someone unfollows you.
+A lightweight CLI tool that silently watches your Letterboxd followers and tells you exactly who unfollowed you — and when.
 
-## Setup
+> No API key needed. No account login required. Just your username.
+
+---
+
+## Features
+
+- **Daily automatic snapshots** via APScheduler — set it and forget it
+- **Precise diff detection** — compares each snapshot against the last to catch unfollows
+- **Persistent history** — every unfollow event is stored with a timestamp in a local SQLite database
+- **Private profile detection** — gracefully skips locked accounts
+- **Zero config** — one file, one database, runs anywhere Python does
+
+---
+
+## Installation
 
 ```bash
+git clone https://github.com/YOUR_USERNAME/letterboxd-unfollower-tracker.git
+cd letterboxd-unfollower-tracker
 pip install -r requirements.txt
 ```
 
+---
+
 ## Usage
 
-### Start the daily watcher (keeps running, checks every day at 09:00)
+### Start the daily watcher
+Captures a baseline immediately, then checks every morning at 09:00.
 ```bash
 python tracker.py watch <username>
 ```
-Takes a baseline snapshot immediately, then checks again every morning at 09:00.  
-Press **Ctrl+C** to stop.
 
-### Take a one-off snapshot and check for unfollowers right now
+### Take a manual snapshot right now
 ```bash
 python tracker.py check <username>
 ```
@@ -32,17 +49,74 @@ python tracker.py history <username>
 python tracker.py clear <username>
 ```
 
-## How it works
+---
 
-1. Scrapes `letterboxd.com/<username>/followers/` (all pages)
-2. Stores the follower list in a local SQLite database (`snapshots.db`)
+## Example Output
+
+```
+[2026-06-13 09:00:01] Checking followers for @moss …
+  Found 312 follower(s).
+
+  ⚠  2 unfollow(s) detected since last check:
+     - https://letterboxd.com/someuser/
+     - https://letterboxd.com/anotheruser/
+```
+
+```
+$ python tracker.py history moss
+
+Unfollow history for @moss (3 event(s)):
+
+  Detected at             User
+  ----------------------  ------------------------------
+  2026-06-13 09:00:01     https://letterboxd.com/someuser/
+  2026-06-13 09:00:01     https://letterboxd.com/anotheruser/
+  2026-06-12 09:00:02     https://letterboxd.com/olduser/
+```
+
+---
+
+## How It Works
+
+1. Scrapes `letterboxd.com/<username>/followers/` across all pages
+2. Saves the full follower list as a snapshot in `snapshots.db`
 3. On each subsequent check, diffs the new list against the previous snapshot
-4. Any username that was present before but is now gone is recorded as an unfollow event
+4. Any username present before but missing now is recorded as an unfollow event
+
+---
+
+## Running Persistently
+
+To keep the watcher running in the background, use `tmux`:
+
+```bash
+tmux new -s letterboxd
+python tracker.py watch yourusername
+# Ctrl+B then D to detach
+```
+
+Or create a systemd service for it to survive reboots.
+
+---
 
 ## Notes
 
-- **First run** only captures the baseline — unfollowers appear from the second check onward
-- **Private profiles** are detected and skipped gracefully
-- **Rate limiting** — the scraper waits ~1.2s between pages to avoid getting blocked
-- `snapshots.db` is created automatically in the same folder as `tracker.py`
-- To run the watcher persistently in the background, use `screen`, `tmux`, or a systemd service
+- The **first run** only establishes a baseline — unfollowers appear from the second check onward
+- Snapshots are stored in `snapshots.db`, created automatically alongside `tracker.py`
+- The scraper waits ~1.2s between page requests to avoid rate limiting
+- Letterboxd has no official public API — this tool scrapes HTML and may break if their markup changes
+
+---
+
+## Requirements
+
+- Python 3.10+
+- `requests`
+- `beautifulsoup4`
+- `apscheduler`
+
+---
+
+## License
+
+MIT
