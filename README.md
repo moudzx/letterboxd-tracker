@@ -19,7 +19,7 @@ A lightweight CLI tool that silently watches your Letterboxd followers and tells
 ## Installation
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/letterboxd-unfollower-tracker.git
+git clone https://github.com/moudzx/letterboxd-unfollower-tracker.git
 cd letterboxd-unfollower-tracker
 pip install -r requirements.txt
 ```
