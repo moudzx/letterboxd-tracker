@@ -1,12 +1,4 @@
 #!/usr/bin/env python3
-"""
-Letterboxd Unfollower Tracker
-Usage:
-  python tracker.py watch <username>   — start the daily background watcher
-  python tracker.py check <username>   — take a snapshot now and show unfollowers
-  python tracker.py history <username> — show full unfollow history
-  python tracker.py clear <username>   — delete all snapshots for a user
-"""
 
 import sys
 import sqlite3
@@ -19,14 +11,10 @@ import requests
 from bs4 import BeautifulSoup
 from apscheduler.schedulers.blocking import BlockingScheduler
 
-# ── Config ────────────────────────────────────────────────────────────────────
-
 DB_PATH = Path(__file__).parent / "snapshots.db"
 HEADERS = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
-REQUEST_DELAY = 1.2   # seconds between page requests
-CHECK_HOUR    = 9     # hour of day to run the daily check (24h, local time)
-
-# ── Database ──────────────────────────────────────────────────────────────────
+REQUEST_DELAY = 1.2
+CHECK_HOUR    = 9
 
 def get_db():
     conn = sqlite3.connect(DB_PATH)
@@ -89,7 +77,7 @@ def get_last_two_snapshots(username):
             "SELECT id, captured_at FROM snapshots WHERE username = ? ORDER BY id DESC LIMIT 2",
             (username,)
         ).fetchall()
-    return rows  # index 0 = newest
+    return rows
 
 
 def save_unfollow_events(username, unfollowers: list):
@@ -121,8 +109,6 @@ def clear_user_data(username):
             )
         db.execute("DELETE FROM snapshots WHERE username = ?", (username,))
         db.execute("DELETE FROM unfollow_events WHERE username = ?", (username,))
-
-# ── Scraper ───────────────────────────────────────────────────────────────────
 
 def scrape_follow_list(username: str, kind: str) -> set | None:
     """
@@ -171,8 +157,6 @@ def scrape_follow_list(username: str, kind: str) -> set | None:
 
     return users
 
-# ── Core logic ────────────────────────────────────────────────────────────────
-
 def take_snapshot_and_diff(username: str, quiet: bool = False) -> list:
     """
     Scrapes current followers, stores a snapshot, diffs against the previous
@@ -216,8 +200,6 @@ def take_snapshot_and_diff(username: str, quiet: bool = False) -> list:
             print("  ✓  No unfollowers since last check.")
 
     return unfollowers
-
-# ── Commands ──────────────────────────────────────────────────────────────────
 
 def cmd_check(username):
     init_db()
@@ -277,8 +259,6 @@ def cmd_clear(username):
         print(f"Cleared all data for @{username}.")
     else:
         print("Aborted.")
-
-# ── Entry point ───────────────────────────────────────────────────────────────
 
 USAGE = __doc__
 
