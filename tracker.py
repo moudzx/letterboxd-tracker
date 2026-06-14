@@ -135,14 +135,13 @@ def scrape_follow_list(username: str, kind: str) -> set | None:
 
         soup = BeautifulSoup(r.text, "html.parser")
 
-        # Detect private/locked profile
         if soup.select_one(".profile-lock"):
             print(f"  [!] '{username}' has a private profile.")
             return None
 
         cards = soup.select("table.person-table a.name")
         if not cards:
-            break  # no more results
+            break
 
         for a in cards:
             href = a.get("href", "").strip("/")
@@ -192,12 +191,12 @@ def take_snapshot_and_diff(username: str, quiet: bool = False) -> list:
     if unfollowers:
         save_unfollow_events(username, unfollowers)
         if not quiet:
-            print(f"\n  ⚠  {len(unfollowers)} unfollow(s) detected since last check:")
+            print(f"\n{len(unfollowers)} unfollow(s) detected since last check:")
             for u in unfollowers:
                 print(f"     - https://letterboxd.com/{u}/")
     else:
         if not quiet:
-            print("  ✓  No unfollowers since last check.")
+            print("No unfollowers since last check.")
 
     return unfollowers
 
@@ -212,7 +211,6 @@ def cmd_watch(username):
     print(f"Snapshots will be taken every day at {CHECK_HOUR:02d}:00.")
     print("Press Ctrl+C to stop.\n")
 
-    # Run once immediately so there's a baseline right away
     take_snapshot_and_diff(username)
 
     scheduler = BlockingScheduler()
